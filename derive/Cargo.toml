@@ -17,7 +17,7 @@ proc-macro = true
 proc-macro2 = "1"
 quote = "1"
 proc_macro_roids = "0.7"
-syn = { version = "*", default-features = false, features = ["derive", "parsing", "proc-macro", "printing"] }
+syn = { version = "1", default-features = false, features = ["derive", "parsing", "proc-macro", "printing"] }
 
 [dev-dependencies]
 dyn-any = { path = "..", features = ["derive"] }

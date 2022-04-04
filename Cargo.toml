@@ -4,7 +4,6 @@ version = "0.1.0"
 edition = "2021"
 authors = ["Dennis Kobert <dennis@kobert.dev>"]
 
-categories = ["no-std"]
 
 description = "An Any trait that works for arbitrary lifetimes"
 documentation = "https://docs.rs/dyn-any"
@@ -16,18 +15,7 @@ license = "MIT"
 dyn-any-derive = { path = "derive", version = "0.1.0", optional = true }
 
 [features]
-default = ["enable-atomics"]
-std = ["alloc"]
-alloc = []
 derive = ["dyn-any-derive"]
-unstable = []
-unstable-docs = []
-enable-atomics = []
 
 [package.metadata.docs.rs]
 all-features = true
-
-#[workspace]
-#members = [
-#	"derive",
-#]
