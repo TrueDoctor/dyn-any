@@ -20,7 +20,7 @@ extern crate alloc;
 
 #[cfg(feature = "derive")]
 #[cfg_attr(feature = "unstable-docs", doc(cfg(feature = "derive")))]
-pub use const_default_derive::ConstDefault;
+pub use dyn_any_derive::DynAny;
 
 /// Implements a compilation time default value for the implemented type.
 ///

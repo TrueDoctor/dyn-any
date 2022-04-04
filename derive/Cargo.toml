@@ -1,12 +1,12 @@
 [package]
-name = "const-default-derive"
-version = "0.2.0"
-edition = "2018"
-authors = ["AerialX"]
+name = "dyn-any-derive"
+version = "0.1.0"
+edition = "2021"
+authors = ["Dennis Kobert"]
 
-description = "#[derive(ConstDefault)]"
-documentation = "https://docs.rs/const-default-derive"
-repository = "https://github.com/AerialX/const-default.rs"
+description = "#[derive(DynAny<'a>)]"
+documentation = "https://docs.rs/dyn-any-derive"
+repository = "https://github.com/TrueDoctor/dyn-any"
 readme = "../README.md"
 license = "MIT"
 
@@ -14,11 +14,10 @@ license = "MIT"
 proc-macro = true
 
 [dependencies]
-proc-macro-crate = "1"
 proc-macro2 = "1"
 quote = "1"
-syn = { version = "1", default-features = false, features = ["derive", 
- "parsing", "proc-macro", "printing"] }
+proc_macro_roids = "0.7"
+syn = { version = "*", default-features = false, features = ["derive", "parsing", "proc-macro", "printing"] }
 
 [dev-dependencies]
-const-default = { path = "..", features = ["derive"] }
+dyn-any = { path = "..", features = ["derive"] }
