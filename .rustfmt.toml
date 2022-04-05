@@ -1,5 +1,5 @@
 max_width = 80
-normalize_comments = true
+normalize_comments = false
 imports_indent = "Block"
 imports_layout = "HorizontalVertical"
 imports_granularity="Crate"
