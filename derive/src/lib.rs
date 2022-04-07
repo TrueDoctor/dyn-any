@@ -4,11 +4,14 @@ extern crate proc_macro;
 
 use proc_macro::TokenStream;
 use proc_macro2::Span;
-use proc_macro_roids::{DeriveInputStructExt, FieldExt, IdentExt};
 use quote::quote;
 use syn::{
-    parse_macro_input, parse_quote, DeriveInput, GenericParam, Ident, Lifetime,
-    LifetimeDef, Type, TypeParamBound,
+    parse_macro_input,
+    DeriveInput,
+    GenericParam,
+    Lifetime,
+    LifetimeDef,
+    TypeParamBound,
 };
 
 /// Derives an implementation for the [`DynAny`] trait.
@@ -22,57 +25,39 @@ use syn::{
 /// ## Struct
 ///
 /// ```
-/// # use const_default::DynAny;
+/// # use dyn_any::{DynAny, StaticType};
 /// #[derive(DynAny)]
 /// # #[derive(Debug, PartialEq)]
-/// pub struct Color {
-///     r: u8,
-///     g: u8,
-///     b: u8,
+/// pub struct Color<'a, 'b> {
+///     r: &'a u8,
+///     g: &'b u8,
+///     b: &'a u8,
 /// }
 ///
-/// assert_eq!(
-/// TODO: fix example
-///     <Color as DynAny>::DEFAULT,
-///     Color { r: 0, g: 0, b: 0 },
-/// )
-/// ```
 ///
-/// ## Tuple Struct
+/// // Generated Impl
 ///
-/// ```
-/// # use const_default::DynAny;
-/// #[derive(DynAny)]
-/// # #[derive(Debug, PartialEq)]
-/// pub struct Vec3(f32, f32, f32);
+/// // impl<'dyn_any> StaticType<'dyn_any> for Color<'dyn_any, 'dyn_any> {
+/// //     type Static = Color<'static, 'static>;
+/// // }
 ///
-/// assert_eq!(
-/// TODO: fix example
-///     <Vec3 as DynAny>::DEFAULT,
-///     Vec3(0.0, 0.0, 0.0),
-/// )
 /// ```
 
 #[proc_macro_derive(DynAny, attributes(dyn_any_derive))]
 pub fn system_desc_derive(input: TokenStream) -> TokenStream {
     let ast = parse_macro_input!(input as DeriveInput);
-    let fields = ast.fields();
     let struct_name = &ast.ident;
-    let vis = &ast.vis;
     let generics = &ast.generics;
-    let attrs = &ast.attrs;
 
     let static_params = replace_lifetimes(generics, "'static");
     let dyn_params = replace_lifetimes(generics, "'dyn_any");
 
     let old_params = &generics.params.iter().collect::<Vec<_>>();
-    let foo = quote! {
-        impl<'dyn_any, #(#old_params,)*> DynAny<'dyn_any> for #struct_name <#(#dyn_params,)*> {
+    quote! {
+        impl<'dyn_any, #(#old_params,)*> StaticType<'dyn_any> for #struct_name <#(#dyn_params,)*> {
             type Static =  #struct_name <#(#static_params,)*>;
         }
-    };
-    //panic!("{:?}", foo.to_string());
-    TokenStream::from(foo)
+    }.into()
 }
 
 fn replace_lifetimes(

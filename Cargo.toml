@@ -1,6 +1,6 @@
 [package]
 name = "dyn-any"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 authors = ["Dennis Kobert <dennis@kobert.dev>"]
 
@@ -12,7 +12,7 @@ readme = "README.md"
 license = "MIT"
 
 [dependencies]
-dyn-any-derive = { path = "derive", version = "0.1.0", optional = true }
+dyn-any-derive = { path = "derive", version = "0.2.0", optional = true }
 
 [features]
 derive = ["dyn-any-derive"]
