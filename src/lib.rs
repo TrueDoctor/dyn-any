@@ -117,8 +117,6 @@ impl_type!(Option<T>,Result<T, E>,Cell<T>,UnsafeCell<T>,RefCell<T>,MaybeUninit<T
            Wrapping<T>, Duration, Once, Mutex<T>, RwLock<T>,  bool, f32, f64, char,
            u8, AtomicU8, u16,AtomicU16, u32,AtomicU32, u64,AtomicU64, usize,AtomicUsize,
            i8,AtomicI8, i16,AtomicI16, i32,AtomicI32, i64,AtomicI64, isize,AtomicIsize,
-           //u8, u16, u32, u64, usize,
-           //i8, i16, i32, i64, isize,
             i128, u128, AtomicBool, AtomicPtr<T>
 );
 macro_rules! impl_tuple {
