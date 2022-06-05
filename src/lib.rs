@@ -11,19 +11,12 @@ pub trait DynAny<'a> {
     fn type_id(&self) -> TypeId;
 }
 
-impl<'a> DynAny<'a> for f32 {
-    fn type_id(&self) -> TypeId {
-        TypeId::of::<f32>()
+impl<'a, T: StaticType> DynAny<'a> for T {
+    fn type_id(&self) -> std::any::TypeId {
+        std::any::TypeId::of::<T::Static>()
     }
 }
-impl<'a, T: 'static> DynAny<'a> for &T {
-    fn type_id(&self) -> TypeId {
-        TypeId::of::<&'static T>()
-    }
-}
-pub fn downcast_ref<'a, V: StaticType<'a>>(
-    i: &'a dyn DynAny<'a>,
-) -> Option<&'a V> {
+pub fn downcast_ref<'a, V: StaticType>(i: &'a dyn DynAny<'a>) -> Option<&'a V> {
     if i.type_id() == std::any::TypeId::of::<<V as StaticType>::Static>() {
         // SAFETY: caller guarantees that T is the correct type
         let ptr = i as *const dyn DynAny<'a> as *const V;
@@ -33,68 +26,66 @@ pub fn downcast_ref<'a, V: StaticType<'a>>(
     }
 }
 
-pub trait StaticType<'a>: 'a {
+pub trait StaticType {
     type Static: 'static + ?Sized;
     fn type_id(&self) -> std::any::TypeId {
         std::any::TypeId::of::<Self::Static>()
     }
 }
 
-pub trait StaticTypeSized<'a>: 'a {
+pub trait StaticTypeSized {
     type Static: 'static;
     fn type_id(&self) -> std::any::TypeId {
         std::any::TypeId::of::<Self::Static>()
     }
 }
-impl<'a, T: StaticTypeSized<'a>> StaticType<'a> for T {
-    type Static = <T as StaticTypeSized<'a>>::Static;
+impl<'a, T: StaticTypeSized> StaticType for T {
+    type Static = <T as StaticTypeSized>::Static;
 }
-pub trait StaticTypeClone<'a>: 'a {
+pub trait StaticTypeClone {
     type Static: 'static + Clone;
     fn type_id(&self) -> std::any::TypeId {
         std::any::TypeId::of::<Self::Static>()
     }
 }
-impl<'a, T: StaticTypeClone<'a>> StaticTypeSized<'a> for T {
-    type Static = <T as StaticTypeClone<'a>>::Static;
+impl<'a, T: StaticTypeClone> StaticTypeSized for T {
+    type Static = <T as StaticTypeClone>::Static;
 }
 
 macro_rules! impl_type {
     ($($id:ident$(<$($(($l:lifetime, $s:lifetime)),*|)?$($T:ident),*>)?),*) => {
         $(
-        impl<'a, $($($T: 'a + $crate::StaticTypeSized<'a> + Sized,)*)?> $crate::StaticTypeSized<'a> for $id $(<$($($l,)*)?$($T, )*>)?{
-            type Static = $id$(<$($($s,)*)?$(<$T as $crate::StaticTypeSized<'a>>::Static,)*>)?;
+        impl<'a, $($($T: 'a + $crate::StaticTypeSized + Sized,)*)?> $crate::StaticTypeSized for $id $(<$($($l,)*)?$($T, )*>)?{
+            type Static = $id$(<$($($s,)*)?$(<$T as $crate::StaticTypeSized>::Static,)*>)?;
         }
         )*
     };
 }
-impl<'a, T: Clone + StaticTypeClone<'a>> StaticTypeClone<'a>
+impl<'a, T: Clone + StaticTypeClone> StaticTypeClone
     for std::borrow::Cow<'a, T>
 {
-    type Static = std::borrow::Cow<'static, <T as StaticTypeSized<'a>>::Static>;
+    type Static = std::borrow::Cow<'static, <T as StaticTypeSized>::Static>;
 }
-impl<'a, T: StaticTypeSized<'a>> StaticTypeSized<'a> for *const [T] {
-    type Static = *const [<T as StaticTypeSized<'a>>::Static];
+impl<'a, T: StaticTypeSized> StaticTypeSized for *const [T] {
+    type Static = *const [<T as StaticTypeSized>::Static];
 }
-impl<'a, T: StaticTypeSized<'a>> StaticTypeSized<'a> for *mut [T] {
-    type Static = *mut [<T as StaticTypeSized<'a>>::Static];
+impl<'a, T: StaticTypeSized> StaticTypeSized for *mut [T] {
+    type Static = *mut [<T as StaticTypeSized>::Static];
 }
-impl<'a, T: StaticTypeSized<'a>> StaticTypeSized<'a> for &'a [T] {
-    type Static = &'static [<T as StaticTypeSized<'a>>::Static];
+impl<'a, T: StaticTypeSized> StaticTypeSized for &'a [T] {
+    type Static = &'static [<T as StaticTypeSized>::Static];
 }
-impl<'a> StaticTypeSized<'a> for &'a str {
+impl<'a> StaticTypeSized for &'a str {
     type Static = &'static str;
 }
-impl<'a> StaticTypeSized<'a> for () {
+impl<'a> StaticTypeSized for () {
     type Static = ();
 }
-impl<'a, T: 'a + StaticTypeClone<'a>> StaticTypeClone<'a> for &'a T {
-    type Static = &'static <T as StaticTypeClone<'a>>::Static;
+impl<'a, T: 'a + StaticTypeClone> StaticTypeClone for &'a T {
+    type Static = &'static <T as StaticTypeClone>::Static;
 }
-impl<'a, T: StaticTypeSized<'a>, const N: usize> StaticTypeSized<'a>
-    for [T; N]
-{
-    type Static = [<T as StaticTypeSized<'a>>::Static; N];
+impl<'a, T: StaticTypeSized, const N: usize> StaticTypeSized for [T; N] {
+    type Static = [<T as StaticTypeSized>::Static; N];
 }
 
 use core::{
@@ -126,8 +117,8 @@ macro_rules! impl_tuple {
         impl_tuple! { @rec $($t)* }
     };
     (@impl $($t:ident)*) => {
-        impl<'dyn_any, $($t: StaticTypeSized<'dyn_any>,)*> StaticTypeSized<'dyn_any> for ($($t,)*) {
-            type Static = ($(<$t as $crate::StaticTypeSized<'dyn_any>>::Static,)*);
+        impl<'dyn_any, $($t: StaticTypeSized,)*> StaticTypeSized for ($($t,)*) {
+            type Static = ($(<$t as $crate::StaticTypeSized>::Static,)*);
         }
     };
     ($($t:ident)*) => {
